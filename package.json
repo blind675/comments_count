@@ -2,6 +2,7 @@
   "name": "comments_count",
   "version": "0.1.0",
   "private": true,
+  "homepage":"https://blind675.github.io/comments_count",
   "dependencies": {
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
