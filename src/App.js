@@ -6,9 +6,10 @@ class App extends React.Component {
     super(props);
     this.state = {
       facebookToken: '104209816294440|xVZhfKIU2_TsCnsimmUoaM0YU68',
-      pageName: 'reactiveboards',
+      pageName: 'dominicprimar',
       status: 'waiting',
-      responseList: []
+      postMessage: '',
+      commentsList: [],
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -29,37 +30,60 @@ class App extends React.Component {
       const FBToken = this.state.facebookToken;
 
       this.setState({
-        status: 'getting posts from page'
-      })
-      //get page posts
-      const url = `https://graph.facebook.com/v2.9/${pageName}/posts?access_token=${FBToken}`;
+        status: `getting post from page: ${pageName}`
+      });
+      this.fetchPostForPage(pageName, FBToken)
+    }
+  }
 
-      fetch(url)
-        .then((res) => {
-          console.log('result: ', res);
-          if (res.ok === false && res.status === 404) {
-            this.setState({ status: 'wrong facebook page name' })
-          } else {
-            return res.json()
-          }
-        })
-        .then((jsonResult) => {
-          const localResponseList = jsonResult.data;
+  fetchPostForPage(pageName, facebookToken) {
+    //get the last post of the facebook page 
+    const url = `https://graph.facebook.com/v2.9/${pageName}/posts?limit=1&access_token=${facebookToken}`;
+
+    fetch(url)
+      .then((res) => {
+        console.log('result: ', res);
+        if (res.ok === false && res.status === 404) {
+          this.setState({ status: 'wrong facebook page name' })
+        } else {
+          return res.json()
+        }
+      })
+      .then((jsonResult) => {
+        if (jsonResult && jsonResult.data) {
+          this.setState({
+            postMessage: jsonResult.data.message,
+            status: 'getting comments for the last post'
+          })
+
+          this.fetchCommentsForAPost(jsonResult.data.id, facebookToken);
+        }
+      })
+  }
+
+  fetchCommentsForAPost(postId, facebookToken) {
+    const url = `https://graph.facebook.com/v2.9/${postId}?fields=comments{message,comment_count,comments}&access_token=${facebookToken}`;
+
+    fetch(url)
+      .then((res) => {
+        console.log('result: ', res);
+        if (res.ok === false && res.status === 404) {
+          this.setState({ status: 'error getting comments' })
+        } else {
+          return res.json()
+        }
+      })
+      .then((jsonResult) => {
+        if (jsonResult && jsonResult.data) {
+          const localResponseList = jsonResult.data.message;
 
           console.log('json result: ', localResponseList);
           this.setState({
-            responseList: localResponseList,
+            commentsList: localResponseList,
             status: 'waiting'
           })
-        },
-          // Note: it's important to handle errors here
-          // instead of a catch() block so that we don't swallow
-          // exceptions from actual bugs in components.
-          (error) => {
-            console.log('error: ', error);
-          }
-        )
-    }
+        }
+      })
   }
 
   renderList(list) {
@@ -128,7 +152,10 @@ class App extends React.Component {
           </form>
           <label> Status: {this.state.status}</label>
           <br />
-          <label> Result: {this.renderList(this.state.responseList)}</label>
+          <br />
+          <label> Last Post: {this.state.postMessage}</label>
+          <br />
+          <label> Comments: {this.renderList(this.state.commentsList)}</label>
         </header>
       </div>
     );
