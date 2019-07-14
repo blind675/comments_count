@@ -30,7 +30,7 @@ class App extends React.Component {
       const FBToken = this.state.facebookToken;
 
       this.setState({
-        status: `getting post from page: ${pageName}`
+        status: `getting post from page - ${pageName}`
       });
       this.fetchPostForPage(pageName, FBToken)
     }
@@ -51,12 +51,12 @@ class App extends React.Component {
       })
       .then((jsonResult) => {
         if (jsonResult && jsonResult.data) {
+          console.log(' json result: ', jsonResult);
           this.setState({
-            postMessage: jsonResult.data.message,
+            postMessage: jsonResult.data[0].message,
             status: 'getting comments for the last post'
           })
-
-          this.fetchCommentsForAPost(jsonResult.data.id, facebookToken);
+          this.fetchCommentsForAPost(jsonResult.data[0].id, facebookToken);
         }
       })
   }
@@ -74,10 +74,11 @@ class App extends React.Component {
         }
       })
       .then((jsonResult) => {
-        if (jsonResult && jsonResult.data) {
-          const localResponseList = jsonResult.data.message;
 
+        if (jsonResult && jsonResult.comments && jsonResult.comments.data) {
+          const localResponseList = jsonResult.comments.data;
           console.log('json result: ', localResponseList);
+
           this.setState({
             commentsList: localResponseList,
             status: 'waiting'
